@@ -16,6 +16,7 @@ npx playwright test -g "Engineer can update a part description"   # single test 
 npx playwright test --project=api-testing --trace on         # force a trace (default: retain-on-failure)
 npx playwright show-report                                   # HTML report
 npx tsc --noEmit                                             # type-check (no lint config exists)
+node manual-tests/tools/validate-cases.mjs inventree         # check manual test case files
 ```
 
 `TEST_ENV` selects the environment (`dev` default → demo server; `qa`/`prod` also need `INVENTREE_API_URL`).
@@ -44,8 +45,8 @@ npx tsc --noEmit                                             # type-check (no li
 Detailed, path-scoped rules in `.claude/rules/` load automatically when matching files are touched. Follow them:
 - `playwright-api-architecture.md` / `playwright-api-scripting.md`: API framework and spec style
 - `playwright-architecture.md` / `playwright-scripting.md`: POM rules (locators inline in methods, no tiny methods, strict page boundaries, `expect*` validation methods, role-based locators first)
-- `manual-test-cases.md`: `manual-tests/` (see `manual-tests/README.md`). Case IDs are append-only, and `traceability.md` counts must be updated when cases change.
+- `manual-test-cases.md` / `manual-test-design.md`: `manual-tests/` format and how to derive cases (see `manual-tests/README.md`). Case IDs are append-only, and `traceability.md` counts must be updated when cases change.
 
-Project skills in `.claude/skills/` (`pw-new-test`, `pw-api-new-test`, `pw-debug-test`, `pw-test-audit`, etc.) cover writing, debugging, and auditing tests.
+Project skills in `.claude/skills/` (`pw-new-test`, `pw-api-new-test`, `pw-debug-test`, `pw-test-audit`, etc.) cover writing, debugging, and auditing tests. `mt-ui-test-cases` and `mt-api-test-cases` generate manual cases from requirements. API requirements come from the OpenAPI JSON at `https://demo.inventree.org/api/schema/?format=json` through `.claude/skills/mt-api-test-cases/scripts/openapi-digest.mjs`, because the rendered schema docs page is too large to read.
 
 The demo server is shared: use the least-privileged account that covers the test, never write tests as `admin`, and don't depend on fixed record IDs. Look them up at runtime (e.g. the first category from `/part/category/`).

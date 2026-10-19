@@ -8,11 +8,13 @@ Manual UI and API test cases, kept separate from the automated Playwright suite 
 manual-tests/
   README.md                      # this file — conventions for every product
   <product>/                     # e.g. inventree
-    requirements/<module>.md     # requirement IDs the cases trace to
+    requirements/<module>.md     # requirement IDs from the product docs (UI cases trace here)
+    requirements/<module>-api.md # requirement IDs from the OpenAPI schema (API cases trace here)
     test-data/<module>-environment.md   # users, seed data, settings shared by the cases
     ui/<module>/NN-<area>.md     # manual UI cases, one file per area
     api/<module>/NN-<area>.md    # manual API cases, one file per area (see api/<module>/_template.md)
     traceability.md              # case counts per area (UI / API)
+  tools/validate-cases.mjs       # checks headers, IDs, legend values, Req references, traceability counts
 ```
 
 Current products:
@@ -47,12 +49,16 @@ Multi-step cells use `<br>` between steps (`1. … <br>2. …`). Literal `|` ins
 - UI: `TC-<AREA>-NNN` (e.g. `TC-CRT-001`, `TC-TAB-STK-003`). API: `TC-API-<AREA>-NNN` (e.g. `TC-API-PRT-001`).
 - IDs are **append-only** — never renumber or reuse an ID. To insert a case next to an existing one, use a letter suffix (`TC-REV-014a`).
 - A removed case keeps its ID retired; note it in the area file instead of deleting silently.
+- Requirement IDs: docs `<AREA>-NN` (e.g. `CRT-03`), API schema `API-<AREA>-NN` (e.g. `API-PRT-03`). Same append-only rule; mark removed ones `(retired)`. Each requirements file starts with its sources, fetch date and (API) schema version.
 
 ## Adding cases
 
 1. Add a row to the matching area file under `ui/` or `api/` (create a new `NN-<area>.md` with the standard header if no area fits).
 2. Reference shared users and seed data from `test-data/` instead of restating them; add new shared data there.
-3. Cite requirement IDs in **Req**; add missing requirements to `requirements/<module>.md` first.
+3. Cite requirement IDs in **Req**; add missing requirements to `requirements/<module>.md` (or `<module>-api.md`) first.
 4. Update the counts in `<product>/traceability.md`.
+5. Run `node manual-tests/tools/validate-cases.mjs <product>` and fix what it reports.
+
+To generate cases from requirements, use the `mt-ui-test-cases` and `mt-api-test-cases` skills. They follow `.claude/rules/manual-test-design.md`.
 
 New product: create `manual-tests/<product>/` with the same layout and add it to the table above.

@@ -14,6 +14,8 @@ Shared pre-conditions for all InvenTree Parts manual cases (UI and API).
 | `engineer` | Part group: view, change, add, delete |
 | `viewer` | Part group: view only |
 
+On the public demo server (`https://demo.inventree.org`) use `engineer` for `engineer` and `reader` for `viewer`; never use `admin` for write cases there. API cases authenticate with `Authorization: Token <token>`, issued by `GET /api/user/me/token/` with the user's Basic credentials (API-CONV-01, API-CONV-02).
+
 **Category tree**
 
 ```
@@ -39,3 +41,5 @@ Mechanical
 | `Solder Paste` | Consumable, Component | Mechanical |
 | `Hookup Wire` | units `m`, Purchaseable | Electronics |
 | `M3 Screw` | Component, Purchaseable | Fasteners |
+
+**Notification start state:** `M3 Screw` minimum stock 100 and total stock 150 before each notification case. `engineer` email `engineer@example.com`; `viewer` has no email address.
