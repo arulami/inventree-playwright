@@ -1,8 +1,12 @@
 import { test as setup, expect } from '@playwright/test'
+import fs from 'fs'
 import { config } from '../../api-test.config'
 
-const engineerFile = 'playwright-utils/ui/.auth/engineer.json'
-const readerFile = 'playwright-utils/ui/.auth/reader.json'
+const roles = [
+  { role: 'engineer', username: config.username, password: config.password },
+  { role: 'reader', username: config.readerUsername, password: config.readerPassword },
+  { role: 'stock', username: config.stockUsername, password: config.stockPassword },
+]
 
 // The demo accounts are shared and their profile language can be changed by anyone; the browser-side
 // language setting overrides the profile, so pin it to English before the app loads.
@@ -14,24 +18,24 @@ setup.beforeEach(async ({ page }) => {
   })
 })
 
-setup('authenticate as engineer', async ({ page }) => {
-  await page.goto('/web/home')
-  await page.getByRole('textbox', { name: 'login-username' }).fill(config.username)
-  await page.getByRole('textbox', { name: 'login-password' }).fill(config.password)
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/v1/auth/login') && response.status() === 200)
-  await page.getByRole('button', { name: 'Log In' }).click()
-  await loginResponse
-  await expect(page).toHaveTitle('InvenTree Demo Server | Dashboard')
-  await page.context().storageState({ path: engineerFile })
-})
-
-setup('authenticate as reader', async ({ page }) => {
-  await page.goto('/web/home')
-  await page.getByRole('textbox', { name: 'login-username' }).fill(config.readerUsername)
-  await page.getByRole('textbox', { name: 'login-password' }).fill(config.readerPassword)
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/v1/auth/login') && response.status() === 200)
-  await page.getByRole('button', { name: 'Log In' }).click()
-  await loginResponse
-  await expect(page).toHaveTitle('InvenTree Demo Server | Dashboard')
-  await page.context().storageState({ path: readerFile })
+roles.forEach(({ role, username, password }) => {
+  setup(`authenticate as ${role}`, async ({ browser, page }) => {
+    const storageStateFile = `playwright-utils/ui/.auth/${role}.json`
+    // InvenTree rate-limits login attempts per IP (5/min), so reuse a saved session while the server still accepts it.
+    // Cookies are scoped to the server's domain, so a session saved for another environment fails this check.
+    if (fs.existsSync(storageStateFile)) {
+      const savedContext = await browser.newContext({ storageState: storageStateFile })
+      const currentUserResponse = await savedContext.request.get(`${config.apiUrl}/user/me/`)
+      await savedContext.close()
+      if (currentUserResponse.ok()) return
+    }
+    await page.goto('/web/home')
+    await page.getByRole('textbox', { name: 'login-username' }).fill(username)
+    await page.getByRole('textbox', { name: 'login-password' }).fill(password)
+    const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/v1/auth/login') && response.status() === 200)
+    await page.getByRole('button', { name: 'Log In' }).click()
+    await loginResponse
+    await expect(page).toHaveTitle('InvenTree Demo Server | Dashboard')
+    await page.context().storageState({ path: storageStateFile })
+  })
 })

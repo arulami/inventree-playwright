@@ -4,6 +4,7 @@ import { PartsPage } from '../pages/parts-page'
 import { PartDetailPage } from '../pages/part-detail-page'
 import { CategoryPage } from '../pages/category-page'
 import { BreadcrumbComponent } from '../pages/breadcrumb-component'
+import { StockItemPage } from '../pages/stock-item-page'
 
 export class PageManager {
   readonly homePage: HomePage
@@ -11,6 +12,7 @@ export class PageManager {
   readonly partDetailPage: PartDetailPage
   readonly categoryPage: CategoryPage
   readonly breadcrumbComponent: BreadcrumbComponent
+  readonly stockItemPage: StockItemPage
 
   constructor(page: Page) {
     this.homePage = new HomePage(page)
@@ -18,5 +20,6 @@ export class PageManager {
     this.partDetailPage = new PartDetailPage(page)
     this.categoryPage = new CategoryPage(page)
     this.breadcrumbComponent = new BreadcrumbComponent(page)
+    this.stockItemPage = new StockItemPage(page)
   }
 }

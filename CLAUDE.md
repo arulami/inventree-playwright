@@ -20,7 +20,9 @@ npx tsc --noEmit                                             # type-check (no li
 node manual-tests/tools/validate-cases.mjs inventree         # check manual test case files
 ```
 
-`TEST_ENV` selects the environment (`dev` default → demo server; `qa`/`prod` also need `INVENTREE_API_URL`).
+`TEST_ENV` selects the environment: `dev` (default) → the shared public demo server; `local` → a local InvenTree at `http://localhost` (override with `INVENTREE_BASE_URL`); `qa`/`prod` also need `INVENTREE_API_URL`. Both the API URL and the UI `baseURL` come from `api-test.config.ts`.
+
+For `local`, load the demo dataset matching the server version into the Docker stack: `docker exec inventree-server invoke dev.setup-test -b 1.5.x -i` (replaces the database). It provides the same `engineer` / `reader` / `allaccess` accounts as the demo. Prefer `local` when the demo server is down or slow; note InvenTree deadlocks on concurrent writes to the same part rows under heavy repetition (`--repeat-each`).
 
 `.env` (git-ignored) must define `INVENTREE_USERNAME`, `INVENTREE_PASSWORD` (demo `engineer` user, can manage parts) and `INVENTREE_READER_USERNAME`, `INVENTREE_READER_PASSWORD` (demo `reader`, read-only). `api-test.config.ts` throws at import time if any are missing, and **both** API and UI suites import it.
 

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from './api-test.config';
 
 /**
  * Read environment variables from file.
@@ -32,7 +33,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'https://demo.inventree.org',
+    baseURL: config.baseUrl,
     trace: 'retain-on-failure',
   },
 
@@ -60,6 +61,18 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright-utils/ui/.auth/engineer.json',
+      },
+      dependencies: ['ui-auth-setup'],
+    },
+
+    {
+      name: 'ui-stock',
+      testDir: './tests/ui-tests/stock',
+      expect: { timeout: uiExpectTimeout },
+      timeout: uiTestTimeout,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright-utils/ui/.auth/stock.json',
       },
       dependencies: ['ui-auth-setup'],
     },

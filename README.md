@@ -22,9 +22,11 @@ INVENTREE_USERNAME=engineer
 INVENTREE_PASSWORD=<engineer password>
 INVENTREE_READER_USERNAME=reader
 INVENTREE_READER_PASSWORD=<reader password>
+INVENTREE_STOCK_USERNAME=allaccess
+INVENTREE_STOCK_PASSWORD=<allaccess password>
 ```
 
-The engineer account can manage parts. The reader account is read-only and is used for permission checks. Every test cleans up the parts it creates.
+The engineer account can manage parts. The reader account is read-only and is used for permission checks. The allaccess account can also create stock, which the cross-functional UI flow needs. Every test cleans up the parts it creates.
 
 ## Running tests
 
@@ -44,7 +46,16 @@ Traces are kept for failed tests. Add `--trace on` to record one for every test.
 
 ### Other environments
 
-`TEST_ENV` selects the target. It defaults to `dev`, the demo server. For `qa` or `prod`, also set `INVENTREE_API_URL`:
+`TEST_ENV` selects the target. It defaults to `dev`, the shared demo server.
+
+To run against a local InvenTree in Docker, load the demo dataset that matches the server's version, then use `TEST_ENV=local` (default `http://localhost`, or set `INVENTREE_BASE_URL`). The dataset includes the same `engineer`, `reader` and `allaccess` accounts, so `.env` works unchanged:
+
+```bash
+docker exec inventree-server invoke dev.setup-test -b 1.5.x -i   # replaces the local database
+TEST_ENV=local npx playwright test
+```
+
+For `qa` or `prod`, also set `INVENTREE_API_URL`:
 
 ```bash
 TEST_ENV=qa INVENTREE_API_URL=https://inventree.example.com/api npx playwright test --project=api-testing
