@@ -91,8 +91,8 @@ services:
             inventree-worker:
                 condition: service_healthy
         ports:
-            - ${INVENTREE_HTTP_PORT:-80}:80
-            - ${INVENTREE_HTTPS_PORT:-443}:443
+            - "127.0.0.1:${INVENTREE_HTTP_PORT:-80}:80"
+            - "127.0.0.1:${INVENTREE_HTTPS_PORT:-443}:443"
         env_file:
             - docker/inventree.env
         environment:
