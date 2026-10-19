@@ -22,10 +22,10 @@ If the user picks "Specific test", ask for the file path or `test()` title to ta
 
 ### 2. Inventory the existing POM
 
-Read everything under `playwright-utils/`:
-- `playwright-utils/pages/` — every page/component class and its public methods
-- `playwright-utils/fixtures/` — the current fixture(s) and `PageManager` (if any)
-- `playwright-utils/helpers/` — utilities you may use, but never inline into a page object
+Read everything under `playwright-utils/ui/` (API support code in `playwright-utils/api/` is out of scope):
+- `playwright-utils/ui/pages/` — every page/component class and its public methods
+- `playwright-utils/ui/fixtures/` — `PageManager`, the `pom` fixture and the `partCleanup` / `categoryCleanup` fixtures
+- `playwright-utils/ui/helpers/` — utilities you may use (test data factories), but never inline into a page object
 
 For each existing class capture:
 - Class name and file
@@ -38,7 +38,7 @@ If no POM exists yet, you will bootstrap it in step 5.
 
 For each spec file in scope:
 - Read the spec end-to-end
-- For each page or component the test touches, read the corresponding source (e.g., `src/app/.../page.tsx`) so you understand the real DOM and can pick reliable locators per `playwright-scripting.md`
+- For each InvenTree page or component the test touches, check the real DOM on the live page (`npx playwright-cli snapshot` on the configured `baseUrl`, logged in as the spec's role) so you can pick reliable locators per `playwright-scripting.md` — InvenTree's aria-label names first. Never add `data-testid` attributes; we don't own the InvenTree source
 - Group the test's steps by **the page they operate on** — every navigation marks a method boundary on a different page object
 - For each step group decide:
   - **Reuse** — an existing method already covers it
@@ -55,28 +55,26 @@ These rules are non-negotiable. Apply them on every new or edited page object.
 #### Class structure
 
 - One TypeScript class per page or major component
-- File name: kebab-case (`login-page.ts`, `course-detail-page.ts`)
-- Class name: PascalCase + `Page` (or component-appropriate) suffix (`LoginPage`, `HeaderComponent`)
+- File name: kebab-case (`part-detail-page.ts`, `breadcrumb-component.ts`)
+- Class name: PascalCase + `Page` (or component-appropriate) suffix (`PartDetailPage`, `BreadcrumbComponent`)
 - Constructor takes `Page` only — **no locator properties, no eager locator construction**
 
 ```typescript
 // GOOD
-export class LoginPage {
+export class HomePage {
   constructor(private page: Page) {}
 
-  async loginWithCredentials(email: string, password: string) {
-    await this.page.getByRole('textbox', { name: 'Email' }).fill(email)
-    await this.page.getByLabel('Password').fill(password)
-    await this.page.getByRole('button', { name: 'Login', exact: true }).click()
-    await expect(this.page).toHaveURL(/\/dashboard$/)
+  async openParts() {
+    await this.page.getByRole('tablist').getByRole('link', { name: 'Parts' }).click()
+    await expect(this.page).toHaveURL(/\/web\/part\//)
   }
 }
 
 // BAD — locators on the class
-export class LoginPage {
-  private emailInput
+export class PartDetailPage {
+  private partActionsMenu
   constructor(private page: Page) {
-    this.emailInput = page.getByRole('textbox', { name: 'Email' })
+    this.partActionsMenu = page.getByRole('button', { name: 'action-menu-part-actions' })
   }
 }
 ```
@@ -91,16 +89,19 @@ A method represents a meaningful user task with multiple steps. Single-action me
 
 ```typescript
 // BAD — tiny method
-async clickLoginButton() {
-  await this.page.getByRole('button', { name: 'Login', exact: true }).click()
+async clickSubmitButton() {
+  await this.page.getByRole('dialog', { name: 'Edit Part' }).getByRole('button', { name: 'Submit' }).click()
 }
 
 // GOOD — meaningful flow
-async loginWithCredentials(email: string, password: string) {
-  await this.page.getByRole('textbox', { name: 'Email' }).fill(email)
-  await this.page.getByLabel('Password').fill(password)
-  await this.page.getByRole('button', { name: 'Login', exact: true }).click()
-  await expect(this.page).toHaveURL(/\/dashboard$/)
+async editPart({ description, active }: { description?: string, active?: boolean }) {
+  await this.page.getByRole('button', { name: 'action-menu-part-actions' }).click()
+  await this.page.getByRole('menuitem', { name: 'action-menu-part-actions-edit' }).click()
+  const editPartDialog = this.page.getByRole('dialog', { name: 'Edit Part' })
+  if (description !== undefined) await editPartDialog.getByRole('textbox', { name: 'text-field-description' }).fill(description)
+  if (active !== undefined) await editPartDialog.getByRole('switch', { name: 'boolean-field-active' }).setChecked(active)
+  await editPartDialog.getByRole('button', { name: 'Submit' }).click()
+  await expect(editPartDialog).toBeHidden()
 }
 ```
 
@@ -109,16 +110,15 @@ async loginWithCredentials(email: string, password: string) {
 A method only interacts with its own page. When an action triggers navigation, the method ends at the navigation assertion; the **next** page's method takes over. Never combine steps from two pages in one method.
 
 ```typescript
-// BAD — one method spans two pages
-async loginAndOpenFirstCourse(email: string, password: string) {
-  // ... login form fill + click
-  await this.page.getByRole('link', { name: 'Courses' }).click()       // dashboard now
-  await this.page.getByRole('article').first().getByRole('link').click()
+// BAD — one method spans the stock item page and the part page
+async openBasePartAndCheckStock(partName: string, quantity: number) {
+  await this.page.getByRole('row', { name: `Base Part ${partName}`, exact: true }).getByRole('link', { name: partName, exact: true }).click()
+  await expect(this.page.getByRole('row', { name: `In Stock ${quantity}`, exact: true })).toBeVisible()   // part page now
 }
 
 // GOOD — split across page objects, composed in the test
-await pom.loginPage.loginWithCredentials(email, password)
-await pom.dashboardPage.openFirstCourse()
+await pom.stockItemPage.openBasePart(newPartValues.name)
+await pom.partDetailPage.expectDetailRows({ 'In Stock': `${stockValues.quantity}` })
 ```
 
 #### Validation at the start
@@ -127,15 +127,17 @@ If the method's first Playwright call is auto-waiting (`click`, `fill`, `check`,
 
 ```typescript
 // GOOD — first step auto-waits
-async fillSearchQuery(query: string) {
-  await this.page.getByRole('textbox', { name: 'Search' }).fill(query)
+async createCategory({ name, description }: { name: string, description: string }) {
+  await this.page.getByRole('button', { name: 'action-button-add-part-category' }).click()
   // ...
 }
 
-// GOOD — non-auto-waiting first step gated by an assertion
-async readVisibleCourseTitles(): Promise<string[]> {
-  await expect(this.page.getByRole('heading', { name: 'Courses' })).toBeVisible()
-  return this.page.getByRole('article').getByRole('heading').allTextContents()
+// GOOD — non-auto-waiting read gated by an assertion (table rows load from the API)
+async openFirstListedPart() {
+  const firstPartRow = this.page.getByRole('tabpanel', { name: 'Parts' }).getByRole('row', { name: /^Select record 1 / })
+  await expect(firstPartRow).toBeVisible()
+  const partNameValue = (await firstPartRow.getByRole('cell', { name: /^Thumbnail / }).textContent())!.trim()
+  // ...
 }
 ```
 
@@ -144,22 +146,22 @@ async readVisibleCourseTitles(): Promise<string[]> {
 When the last step is an action with no trailing assertion, add a confirmation:
 
 - For navigation: `await expect(this.page).toHaveURL(...)` — page-agnostic, a clean boundary marker
-- For in-page changes: a simple `toBeVisible` / `toHaveText` / `toContainText` on the affected element
+- For in-page changes: a simple `toBeVisible` / `toBeHidden` / `toContainText` on the affected element
 
 This is a **stabilizing** check, not the test's goal assertion — keep it minimal.
 
 ```typescript
-// GOOD — URL assertion after navigation
-async loginWithCredentials(email: string, password: string) {
-  // ... fill + click
-  await expect(this.page).toHaveURL(/\/dashboard$/)
+// GOOD — URL assertion after navigation (deleting a part shows its category)
+async deletePart() {
+  // ... open Part Actions → Delete and confirm
+  await expect(this.page).toHaveURL(/\/web\/part\/category\/\d+\/parts$/)
 }
 
-// GOOD — in-page confirmation
-async addCourseToCart(courseName: string) {
-  await this.page.getByRole('article', { name: courseName })
-    .getByRole('button', { name: 'Add to cart' }).click()
-  await expect(this.page.getByRole('button', { name: 'Cart' })).toContainText('1')
+// GOOD — in-page confirmation (the dialog closes after saving)
+async addParameter({ templateName, templateOption, data }: { templateName: string, templateOption: string, data: string }) {
+  // ... open Parameters → Add Parameters → Create Parameter and fill the form
+  await addParameterDialog.getByRole('button', { name: 'Submit' }).click()
+  await expect(addParameterDialog).toBeHidden()
 }
 ```
 
@@ -170,18 +172,21 @@ async addCourseToCart(courseName: string) {
 
 ```typescript
 // Validation method — owns the goal assertion, parametrized
-async expectErrorMessage(message: string) {
-  await expect(this.page.getByRole('alert')).toHaveText(message)
+async expectDeleteRefused(message: string) {
+  await expect(this.page.getByRole('dialog', { name: 'Delete Part' }).getByRole('alert', { name: 'Form Error' })).toContainText(message)
+  await expect(this.page).toHaveURL(/\/web\/part\/\d+\/details$/)
 }
 ```
 
 The test reads as action → action → validation:
 
 ```typescript
-test('User sees error for invalid password', async ({ pom }) => {
-  await pom.homePage.openLogin()
-  await pom.loginPage.loginWithCredentials('user@example.com', 'wrong')
-  await pom.loginPage.expectErrorMessage('Invalid email or password')
+test('Engineer cannot delete a locked part', async ({ pom, partCleanup }) => {
+  await pom.homePage.openParts()
+  partCleanup.register(await pom.partsPage.createPart(getNewPartValues('Resistors')))
+  await pom.partDetailPage.editPart({ locked: true, active: false })
+  await pom.partDetailPage.attemptDeletePart()
+  await pom.partDetailPage.expectDeleteRefused('Cannot delete this part as it is locked')
 })
 ```
 
@@ -192,14 +197,14 @@ test('User sees error for invalid password', async ({ pom }) => {
 - Validation methods start with `expect`
 
 ```
-loginWithCredentials       ✅
-fillCheckoutBillingForm    ✅
-openFirstCourseInList      ✅
-expectCartItemCount        ✅
+createPart                 ✅
+openFirstListedPart        ✅
+addStockItem               ✅
+expectDeleteRefused        ✅
 
-login                      ❌ vague
-clickBtn                   ❌ abbreviation
-doLogin                    ❌ vague verb
+edit                       ❌ vague
+clickAddBtn                ❌ abbreviation
+doPart                     ❌ vague verb
 ```
 
 #### Reuse first
@@ -213,24 +218,24 @@ Before adding a new method, scan every existing method on the relevant class. If
 If these files don't exist yet, create them:
 
 ```typescript
-// playwright-utils/fixtures/page-manager.ts
+// playwright-utils/ui/fixtures/page-manager.ts
 import type { Page } from '@playwright/test'
-import { LoginPage } from '../pages/login-page'
-import { DashboardPage } from '../pages/dashboard-page'
+import { HomePage } from '../pages/home-page'
+import { PartsPage } from '../pages/parts-page'
 
 export class PageManager {
-  readonly loginPage: LoginPage
-  readonly dashboardPage: DashboardPage
+  readonly homePage: HomePage
+  readonly partsPage: PartsPage
 
   constructor(page: Page) {
-    this.loginPage = new LoginPage(page)
-    this.dashboardPage = new DashboardPage(page)
+    this.homePage = new HomePage(page)
+    this.partsPage = new PartsPage(page)
   }
 }
 ```
 
 ```typescript
-// playwright-utils/fixtures/index.ts
+// playwright-utils/ui/fixtures/index.ts (keep the existing partCleanup / categoryCleanup fixtures)
 import { test as base, expect } from '@playwright/test'
 import { PageManager } from './page-manager'
 
@@ -246,9 +251,9 @@ export { expect }
 ```
 
 When you add a new page class:
-1. Create `playwright-utils/pages/<page-name>.ts`
+1. Create `playwright-utils/ui/pages/<page-name>.ts`
 2. In `PageManager`: add the import, the `readonly` property, and the constructor instantiation
-3. Property name = camelCase of the class name (`LoginPage` → `loginPage`)
+3. Property name = camelCase of the class name (`StockItemPage` → `stockItemPage`)
 
 ### 6. Refactor the test files
 
@@ -258,21 +263,21 @@ Swap inline Playwright calls for `pom` calls. **Do not split tests, do not regro
 // Before
 import { test, expect } from '@playwright/test'
 
-test('User can log in with valid credentials', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('link', { name: 'Log In' }).click()
-  await page.getByRole('textbox', { name: 'Email' }).fill('user@example.com')
-  await page.getByLabel('Password').fill('Password123!')
-  await page.getByRole('button', { name: 'Login', exact: true }).click()
-  await expect(page).toHaveURL('/dashboard')
+test('Read-only user cannot add parts or categories', async ({ page }) => {
+  await page.goto('/web/home')
+  await page.getByRole('tablist').getByRole('link', { name: 'Parts' }).click()
+  await page.getByRole('tablist', { name: 'panel-tabs-partcategory' }).getByRole('tab', { name: 'Parts' }).click()
+  await expect(page.getByRole('tabpanel', { name: 'Parts' }).getByRole('row', { name: /^Select record 1 / })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'action-menu-add-parts' })).toHaveCount(0)
 })
 
 // After
-import { test, expect } from '../../playwright-utils/fixtures'
+import { test } from '../../../playwright-utils/ui/fixtures'
 
-test('User can log in with valid credentials', async ({ pom }) => {
-  await pom.homePage.openLogin()
-  await pom.loginPage.loginWithCredentials('user@example.com', 'Password123!')
+test('Read-only user cannot add parts or categories', async ({ pom }) => {
+  await pom.homePage.open()
+  await pom.homePage.openParts()
+  await pom.partsPage.expectAddActionsHidden()
 })
 ```
 
@@ -351,7 +356,7 @@ On **"No"**: stop.
 ## Anti-patterns (quick reference)
 
 - ❌ Locator constants on the class (constructor or properties)
-- ❌ Single-action methods (`clickLoginButton`, `fillEmail`)
+- ❌ Single-action methods (`clickSubmitButton`, `fillPartName`)
 - ❌ Methods spanning two pages
 - ❌ Action methods owning the test's goal assertion (use a separate `expect*` validation method)
 - ❌ Duplicate methods that differ only in a hardcoded value (parametrize instead)

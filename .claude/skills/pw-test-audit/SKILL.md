@@ -44,11 +44,11 @@ Detect whether the project's affected tests use Page Object Model:
 
 This determines which audit rules apply. POM rules are skipped entirely when POM is not in use — that is an expected, valid setup. Do not flag the absence of POM as a violation.
 
-### 3. Read the application source code touched by the changes
+### 3. Check the locators against the live InvenTree UI
 
-For each locator or interaction in the diff, read the frontend source code that renders the element. The project may use any framework (React, Vue, Angular, Svelte, plain HTML, etc.) and any directory structure — discover where the UI components live, then read the files that render the routes and components the test interacts with.
+The InvenTree source is not in this repo, so verify locators against the running UI. For each new or changed locator, open the page on the configured `baseUrl` (from `api-test.config.ts`) with `npx playwright-cli`, logged in as the role the spec runs as, and check the element in a `snapshot` or with `generate-locator`. Existing page objects in `playwright-utils/ui/pages/` show the accessible names already proven to work.
 
-Goal: judge whether each locator is correct, unique, and the most semantic option available, based on the actual rendered HTML and the locator priority defined in the project's scripting rules.
+Goal: judge whether each locator is correct, unique, and the most semantic option available, based on the rendered page and the locator priority in `playwright-scripting.md` (role + InvenTree aria-label names first).
 
 ### 4. Audit the changes
 
@@ -57,12 +57,12 @@ Walk every changed line against the checklists below. Flag each violation with `
 #### Locators
 - Priority order followed: `getByRole` > `getByLabel` > `getByText` > `getByPlaceholder` > `getByTestId` > CSS (only for stable structural tags, never style classes)
 - No CSS class-name selectors as locators
-- `data-testid` actually exists in the source; if newly added, the value follows the project's naming convention (e.g. ends with the element noun if the project requires it)
-- Locators used with action methods (`click`, `fill`, `check`, `selectOption`) resolve to exactly one element — verify by reading source
+- `getByTestId` only targets a `data-testid` that InvenTree actually renders; no change proposes adding test IDs to InvenTree
+- Locators used with action methods (`click`, `fill`, `check`, `setChecked`) resolve to exactly one element — verify on the live page
 - Repeated UI patterns (cards, rows, list items) are scoped to their container — no `.first()` or unscoped action locators that risk false positives
-- Cross-page navigation captures a value from the source page (e.g. heading text) and asserts it on the destination, not just any element of the destination type
+- Cross-page navigation captures a value from the starting page (e.g. the part name in a table row) and asserts it on the destination, not just any element of the destination type
 - `name` / `hasText` constructor option preferred over `.filter()` when one is enough; `.filter()` reserved for second-level filtration
-- Locator text matches source code exactly, including the responsive variant visible at the test viewport
+- Accessible names match the live page exactly (InvenTree aria-labels such as `action-menu-part-actions`, or English visible text)
 - Semantic scoping: assertions on values that belong to a specific section are scoped to that section, not asserted globally on the page
 
 #### Assertions
@@ -79,7 +79,7 @@ Walk every changed line against the checklists below. Flag each violation with `
 
 #### Test structure
 - Test names describe user behavior, not implementation details
-- Test entry point follows the project's convention (e.g. always start at the home page, or other documented pattern)
+- Test starts at the dashboard through `pom.homePage.open()` and reaches inner pages through the UI, never by `goto` to a record URL
 - Each test verifies one logical user flow
 - `test.describe` placement and `beforeEach` usage match the file's existing conventions
 
@@ -142,8 +142,8 @@ Output a single structured report directly to the user using markdown tables, on
 Formatting rules:
 - Omit any section with no entries.
 - Keep cell content to a single line each. If the rule citation and the evidence are both essential, combine them as `<rule>: <evidence>` in the **Issue** column rather than spilling onto a second line.
-- Use backticks around code identifiers, file paths, and selectors inside cells (e.g. `` `.ion-trash-a` ``, `` `getByTestId` ``, `` `article-page.ts:14` ``).
-- Strip directory prefixes from the **Location** column to keep the table narrow — show only the filename and line (e.g. `article-page.ts:14`, not the full path). The reader can disambiguate from context; the full path lives only in the surrounding prose if needed.
+- Use backticks around code identifiers, file paths, and selectors inside cells (e.g. `` `action-menu-part-actions` ``, `` `getByRole` ``, `` `part-detail-page.ts:14` ``).
+- Strip directory prefixes from the **Location** column to keep the table narrow — show only the filename and line (e.g. `part-detail-page.ts:14`, not the full path). The reader can disambiguate from context; the full path lives only in the surrounding prose if needed.
 - Cite the specific rule from the project's rules files inside the **Issue** column.
 - The "What looks good" section stays as bullets — it's praise, not actionable items.
 
@@ -176,10 +176,10 @@ If the user picks **Discuss**: answer their questions and only edit code on expl
 
 ## Operating principles
 
-- **Fresh-eyes posture** — you are NOT the agent that wrote this code. Re-derive every locator from the application source. Question every choice. The previous agent's intent is irrelevant; only the rules and the source code matter.
+- **Fresh-eyes posture** — you are NOT the agent that wrote this code. Re-derive every locator from the live InvenTree page. Question every choice. The previous agent's intent is irrelevant; only the rules and the rendered page matter.
 - **Recent uncommitted changes only** — the uncommitted diff is the entire audit scope. Never fall back to prior commits, never review untouched files, never propose rewrites of tests outside the diff.
 - **Cite rules, not opinions** — every must-fix finding maps to a rule in the project's documented rules files. Opinion-only feedback goes under Suggestions.
-- **Verify locators against source** — do not flag a locator as wrong without first reading the component that renders it. A locator that looks weak may be the only reliable option for that DOM.
+- **Verify locators against the live page** — do not flag a locator as wrong without first checking the element on the running InvenTree UI. A locator that looks weak may be the only reliable option for that DOM.
 - **No guessing about test intent** — if a finding depends on what the test was supposed to do, ask rather than assume.
 - **POM-conditional review** — if POM is not in use, skip the POM section entirely. A bare Playwright spec is a valid project setup, not a violation.
 - **Framework-agnostic** — the project may use any frontend framework or directory layout. Discover the project's conventions from its files; do not assume a specific stack.

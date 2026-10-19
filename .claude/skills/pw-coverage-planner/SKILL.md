@@ -1,6 +1,6 @@
 ---
 name: pw-coverage-planner
-description: Plan Playwright E2E test coverage for a parent scenario. Enters plan mode, researches existing tests and source code, brainstorms positive/edge/negative cases, and saves an approved coverage plan as a markdown artifact in `.claude/pw-plans/` for later test generation.
+description: Plan Playwright E2E test coverage for a parent scenario. Enters plan mode, researches existing tests, the live InvenTree UI, its API schema and the manual requirements, brainstorms positive/edge/negative cases, and saves an approved coverage plan as a markdown artifact in `.claude/pw-plans/` for later test generation.
 ---
 
 Build a comprehensive Playwright test coverage plan for a parent scenario provided by the user. The output is a markdown artifact in `.claude/pw-plans/` that downstream skills (e.g. `pw-new-test`) can consume to generate concrete tests.
@@ -38,16 +38,15 @@ Read the spec files under `tests/` (or whichever directory the project uses for 
 
 If the project has a Playwright rules file (e.g. under `.claude/rules/`), read it and respect its conventions in the plan (naming style, locator priorities, assertion patterns).
 
-### 4. Inspect application source code
+### 4. Research InvenTree's behavior
 
-For each page or component the parent scenario touches, read enough source to identify behavior worth testing:
-- Page / route / view files that render the UI
-- Child components rendering the interactive elements
-- Server-side endpoints, controllers, or API routers behind those components — input validation schemas reveal field rules; thrown errors and conditional branches reveal negative-path behavior
-- Data layer / schema definitions — uniqueness constraints, enums, nullability, status fields
-- Authorization checks — role guards, ownership checks, middleware
+The InvenTree source is not in this repo, so gather behavior from these sources for each screen the parent scenario touches:
+- **Manual requirements and cases** — `manual-tests/inventree/requirements/` and the existing cases under `manual-tests/inventree/ui/` and `api/`; reuse their requirement IDs in the plan
+- **The live UI** — walk the flow on the configured `baseUrl` with `npx playwright-cli` as each relevant role (`engineer`, `reader`, `allaccess`): which actions, fields, tabs and validation messages appear, and which are hidden or disabled per role
+- **The API schema** — run `.claude/skills/mt-api-test-cases/scripts/openapi-digest.mjs` for the endpoints behind the screen: required fields, max lengths, enums, read-only fields and permissions reveal field rules and negative paths
+- **InvenTree documentation** (`docs.inventree.org`) — business rules such as locked or inactive parts, templates and variants, stock tracking
 
-Adapt the search to whatever stack the project uses (any framework, any language, any data layer). The goal is to surface every observable branch a user could hit. Do not infer behavior — read the code.
+The goal is to surface every observable branch a user could hit. Do not infer behavior — confirm it on the live UI or in the schema or docs. Remember the demo server is shared and reset daily: plan cases that create their own data rather than depend on fixed records.
 
 ### 5. Brainstorm test cases across all categories
 

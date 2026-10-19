@@ -1,6 +1,6 @@
 ---
 name: pw-new-test
-description: Write a new Playwright E2E test from user-provided test steps. Reviews existing tests, inspects source code, writes the test, then runs and debugs it if needed.
+description: Write a new Playwright E2E test for the InvenTree UI from user-provided test steps. Reviews existing tests and page objects, inspects the live InvenTree page for locators, writes the test, then runs and debugs it if needed.
 ---
 
 Write a new Playwright E2E test based on the provided test steps.
@@ -20,19 +20,20 @@ Read all existing spec files in `tests/` to understand:
 - The conventions used (naming, grouping, beforeEach patterns)
 - Whether page objects or fixtures from `playwright-utils/` are available and relevant
 
-### 2. Inspect application source code
+### 2. Inspect the InvenTree UI
 
-For each page or component involved in the test steps:
+The InvenTree source is not part of this repo and must not be changed, so locators come from the running UI:
 
-- Read the source code of the relevant page component (e.g., `src/app/(frontend)/blog/[slug]/page.tsx`)
-- Read child components that render the elements you need to interact with or assert on
-- Identify reliable locators using the priority from playwright-scripting: `getByRole` > `getByLabel` > `getByText` > `getByPlaceholder` > `getByTestId` > CSS selector
-- If no reliable user-visible locator exists for an element, **add a `data-testid` attribute to the application source code**, then use `getByTestId` in the test
+- First reuse what exists: scan `playwright-utils/ui/pages/` for methods that already cover the steps (most part, category and stock flows are there)
+- For new screens or elements, open the page on the configured `baseURL` with `npx playwright-cli`, take a `snapshot`, and use `generate-locator` on the elements you need. Log in as the role the test runs as (`engineer`, `reader` or `allaccess`), never `admin`
+- Identify locators using the priority from `playwright-scripting.md`: `getByRole` with InvenTree's aria-label names (`action-menu-*`, `text-field-*`, `panel-tabs-*`, ...) first, then visible text
+- If no reliable locator exists, scope a text or role locator to its dialog, tab panel or table row. **Never add `data-testid` attributes** — we don't own the InvenTree source
 
 ### 3. Write the test
 
-- Place the test in the correct file and `test.describe` block based on the existing structure
-- Every test starts from the home page (`/`) — never navigate directly to inner pages. Use UI interactions (clicking links, buttons) to reach the target page
+- Place the test in the spec folder of the least-privileged role that can perform it (`tests/ui-tests/engineer/`, `reader/` or `stock/`) and in the matching `test.describe` block
+- Every test starts at the dashboard through `pom.homePage.open()` — never navigate directly to inner pages such as `/web/part/<pk>/details`. Use UI interactions to reach the target page
+- Create the records the test needs with the factories in `playwright-utils/ui/helpers/test-data.ts`, and register every created part or category with `partCleanup` / `categoryCleanup`
 - Follow all conventions from the Playwright rules (locator priority, assertion types, waiting patterns, naming, constant usage)
 - **No custom timeouts** — do not add `test.setTimeout()`, `{ timeout: ... }` on assertions, or `waitForURL` timeouts. Always use the default timeouts from `playwright.config.ts`. Custom timeouts are only allowed as a fix during debugging (step 6) when the test fails because the default timeout was genuinely insufficient.
 - Each test should verify one logical user flow

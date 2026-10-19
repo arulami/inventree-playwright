@@ -13,10 +13,10 @@ You are debugging a Playwright E2E test by attaching to a paused, running test s
 
 Use `AskUserQuestion` to collect:
 
-1. **Test file path** — relative to repo root, e.g. `tests/user/article-create.spec.ts`.
+1. **Test file path** — relative to repo root, e.g. `tests/ui-tests/engineer/part-management.spec.ts`.
 2. **Test name** — the `test('...')` title (or a unique keyword from it). Used as `-g <pattern>`.
 3. **Line number** — the line where execution should pause. Should be inside the body of the chosen test.
-4. **Failure hint** _(optional)_ — what's suspected to fail (e.g. "the publish button click times out"). Helps focus the investigation.
+4. **Failure hint** _(optional)_ — what's suspected to fail (e.g. "the Part Actions menu click times out"). Helps focus the investigation.
 
 Do not skip this step under any circumstance, even if the user has asked to work without clarifying questions. You need all four answers before continuing.
 
@@ -68,10 +68,10 @@ Capture the session id as `<session>`.
 Just before the "Debugging Instructions" block, the runner prints the test that's paused, e.g.:
 
 ```
-[user] › tests/user/article-create.spec.ts:8:7 › Article create › Authenticated user can publish...
+[ui-engineer] › tests/ui-tests/engineer/part-management.spec.ts:9:7 › Part management › Engineer can edit a part description
 ```
 
-Verify this matches the file the user gave you. If it doesn't (most often: an `auth-setup` or other dependency project paused first), advance past it:
+Verify this matches the file the user gave you. If it doesn't (most often: the `ui-auth-setup` dependency project paused first), advance past it:
 
 ```bash
 npx playwright-cli attach <session>
@@ -119,7 +119,7 @@ The agent picks tools from the cli surface based on the user's hint and what the
 | Check console output                              | `npx playwright-cli -s=<session> console --json`                                                         |
 | Inspect network                                   | `npx playwright-cli -s=<session> requests --json` then `request <n> --json`                              |
 | Step one action at a time                         | `npx playwright-cli -s=<session> step-over`                                                              |
-| Run a Playwright TS snippet against the live test | `npx playwright-cli -s=<session> run-code "await page.getByRole('button', { name: 'Publish' }).click()"` |
+| Run a Playwright TS snippet against the live test | `npx playwright-cli -s=<session> run-code "await page.getByRole('button', { name: 'action-menu-part-actions' }).click()"` |
 
 Common diagnostic flow:
 

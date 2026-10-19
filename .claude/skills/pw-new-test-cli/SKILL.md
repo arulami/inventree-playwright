@@ -1,9 +1,9 @@
 ---
 name: pw-new-test-cli
-description: Write a new Playwright E2E test from user-provided test steps when application source code is NOT accessible. Uses Playwright CLI (`@playwright/cli`) to inspect a live URL via snapshots and `generate-locator`, then writes the test, runs and debugs it if needed.
+description: Write a new Playwright E2E test for an InvenTree screen that no page object covers yet. Uses Playwright CLI (`@playwright/cli`) to walk the flow on the live InvenTree server via snapshots and `generate-locator`, then writes the test, runs and debugs it if needed.
 ---
 
-Write a new Playwright E2E test based on the provided test steps using the Playwright CLI to explore a live application instead of reading source code.
+Write a new Playwright E2E test based on the provided test steps using the Playwright CLI to explore the live InvenTree UI.
 
 Test steps: $ARGUMENTS
 
@@ -11,7 +11,7 @@ Test steps: $ARGUMENTS
 
 ## When to use this skill
 
-Use this skill when the application source code is **not accessible** — for example, testing a third-party site, a deployed-only environment, or an application owned by another team. If you have access to the source code, prefer the `pw-new-test` skill: reading source is faster and produces more reliable locators than CLI snapshots.
+Use this skill when the test touches InvenTree screens that no page object in `playwright-utils/ui/pages/` covers yet, so every step has to be discovered on the live page. When the existing page objects already cover most of the flow, prefer `pw-new-test`.
 
 ## Prerequisites
 
@@ -37,11 +37,11 @@ Read all existing spec files in `tests/` to understand:
 - The conventions used (naming, grouping, beforeEach patterns)
 - Whether page objects or fixtures from `playwright-utils/` are available and relevant
 
-Also read `playwright.config.ts` to identify the configured `baseURL` — this is the live URL you will pass to the CLI in step 2.
+Also read `api-test.config.ts` to identify the `baseUrl` for the current `TEST_ENV` (the demo server by default, `http://localhost` for `local`) — this is the live URL you will pass to the CLI in step 2.
 
 ### 2. Explore the live application via Playwright CLI
 
-Confirm the URL with the user (default to `baseURL` from `playwright.config.ts`; ask if not configured or if a different environment is needed), then walk the test flow against the live site using the CLI. The CLI maintains page state between commands within a session, and each interaction returns an updated YAML snapshot with element refs (e.g., `e7`, `e15`) that you reuse in subsequent commands.
+Confirm the URL with the user (default to the `baseUrl` from `api-test.config.ts`; ask if a different environment is needed), then walk the test flow against the live site using the CLI. The CLI maintains page state between commands within a session, and each interaction returns an updated YAML snapshot with element refs (e.g., `e7`, `e15`) that you reuse in subsequent commands.
 
 #### 2.1 Open a session
 
@@ -50,6 +50,8 @@ npx playwright-cli open <baseURL>
 ```
 
 This launches a browser and navigates to the URL. The response includes a snapshot of the page with element refs.
+
+Log in through the InvenTree login form as the role the test will run as (`engineer`, `reader` or `allaccess`, credentials from `.env`), never as `admin`. If the UI is not in English, switch the language to English first, because the suite's locators assume English labels.
 
 #### 2.2 Walk the user flow
 
@@ -61,8 +63,7 @@ npx playwright-cli snapshot
 
 # Interact with elements using refs from the snapshot
 npx playwright-cli click e15
-npx playwright-cli fill e7 "user@example.com"
-npx playwright-cli select e22 "US"
+npx playwright-cli fill e7 "PW Test Resistor"
 npx playwright-cli check e9
 
 # Navigate explicitly when needed
@@ -96,9 +97,9 @@ npx playwright-cli close
 ### 3. Write the test
 
 - Place the test in the correct file and `test.describe` block based on the existing structure
-- Every test starts from the home page (`/`) — never navigate directly to inner pages. Use UI interactions (clicking links, buttons) to reach the target page
+- Every test starts at the dashboard through `pom.homePage.open()` — never navigate directly to inner pages such as `/web/part/<pk>/details`. Use UI interactions to reach the target page
 - Follow all conventions from the Playwright rules (locator priority, assertion types, waiting patterns, naming, constant usage)
-- **Do NOT modify application source code.** Since you do not have source access, you cannot add `data-testid` attributes. If no reliable user-visible locator exists for an element, use the most stable alternative the CLI revealed (an existing testid, a scoped role, or a structural CSS selector on a stable HTML tag). If you are forced to use a fragile locator, flag it explicitly to the user so they can request a `data-testid` from the application owner.
+- **Never add `data-testid` attributes or change InvenTree code.** Prefer InvenTree's aria-label names (`action-menu-*`, `text-field-*`, `panel-tabs-*`, ...) that the snapshot shows; otherwise scope a role or text locator to its dialog, tab panel or table row. If you are forced to use a fragile locator, flag it explicitly to the user.
 - **No custom timeouts** — do not add `test.setTimeout()`, `{ timeout: ... }` on assertions, or `waitForURL` timeouts. Always use the default timeouts from `playwright.config.ts`. Custom timeouts are only allowed as a fix during debugging (step 6) when the test fails because the default timeout was genuinely insufficient.
 - Each test should verify one logical user flow
 - Use the test steps provided by the user as the guide for the test actions and assertions
