@@ -27,7 +27,9 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  // A local InvenTree (TEST_ENV=local) is fast enough for parts created in parallel to collide in its part tree
+  // (duplicate MPTT tree ids, then deadlocks and 500s), so the local server runs one test at a time.
+  workers: process.env.CI || process.env.TEST_ENV === 'local' ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html'], ['list']],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

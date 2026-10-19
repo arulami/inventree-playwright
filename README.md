@@ -48,12 +48,17 @@ Traces are kept for failed tests. Add `--trace on` to record one for every test.
 
 `TEST_ENV` selects the target. It defaults to `dev`, the shared demo server.
 
-To run against a local InvenTree in Docker, load the demo dataset that matches the server's version, then use `TEST_ENV=local` (default `http://localhost`, or set `INVENTREE_BASE_URL`). The dataset includes the same `engineer`, `reader` and `allaccess` accounts, so `.env` works unchanged:
+To run against a local InvenTree in Docker, start the stack from the project root, load the demo dataset that matches the server's version, then use `TEST_ENV=local` (default `http://localhost`, or set `INVENTREE_BASE_URL`). The dataset includes the same `engineer`, `reader` and `allaccess` accounts, so `.env` works unchanged:
 
 ```bash
-docker exec inventree-server invoke dev.setup-test -b 1.5.x -i   # replaces the local database
+docker compose up -d
+docker exec inventree-server invoke dev.setup-test -b 1.5.x -i   # load the demo dataset (replaces the database)
+docker exec inventree-server invoke int.rebuild-models           # repair the part/category trees after the import
+docker exec inventree-server invoke static                       # collect the web UI files into docker/data
 TEST_ENV=local npx playwright test
 ```
+
+`docker-compose.yml` at the project root runs PostgreSQL, Redis, the InvenTree server and worker, and Caddy on port 80; its settings are in `docker/inventree.env` and its data in `docker/data/` (git-ignored). Local runs use one worker, because InvenTree's part tree breaks when parts are created in parallel against a fast server.
 
 For `qa` or `prod`, also set `INVENTREE_API_URL`:
 

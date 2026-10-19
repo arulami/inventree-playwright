@@ -1,0 +1,113 @@
+# Local InvenTree for running the Playwright suite with TEST_ENV=local.
+# Adapted from InvenTree's production compose recipe (https://docs.inventree.org/en/stable/start/docker/):
+# PostgreSQL, Redis, the InvenTree server and worker, and Caddy serving http://localhost.
+#
+#   docker compose up -d
+#   docker exec inventree-server invoke dev.setup-test -b 1.5.x -i   # load the demo dataset (replaces the database)
+#   docker exec inventree-server invoke int.rebuild-models           # repair the part/category trees after the import
+#   docker exec inventree-server invoke static                       # collect the web UI files into docker/data
+#   TEST_ENV=local npx playwright test
+#
+# Settings live in docker/inventree.env (not the project .env, which holds the test credentials).
+# INVENTREE_TAG must match the demo-dataset branch passed to dev.setup-test.
+
+name: inventree
+
+services:
+    inventree-db:
+        image: postgres:17
+        container_name: inventree-db
+        env_file:
+            - docker/inventree.env
+        volumes:
+            - ./docker/data:/var/lib/postgresql/data/:z
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+            interval: 15s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        restart: unless-stopped
+
+    inventree-cache:
+        image: redis:7-alpine
+        container_name: inventree-cache
+        command: redis-server --save "" --appendonly no
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 15s
+            timeout: 5s
+            retries: 10
+            start_period: 10s
+        restart: always
+
+    inventree-server:
+        image: inventree/inventree:${INVENTREE_TAG:-1.5.8}
+        container_name: inventree-server
+        depends_on:
+            inventree-db:
+                condition: service_healthy
+            inventree-cache:
+                condition: service_healthy
+        env_file:
+            - docker/inventree.env
+        environment:
+            INVENTREE_SERVER: http://inventree-server:8000
+        volumes:
+            - ./docker/data:/home/inventree/data:z
+        healthcheck:
+            test: ['CMD-SHELL', 'invoke server-health --address "http://localhost:$${INVENTREE_WEB_PORT:-8000}"']
+            interval: 20s
+            timeout: 5s
+            retries: 10
+            start_period: 60s
+        restart: unless-stopped
+
+    inventree-worker:
+        image: inventree/inventree:${INVENTREE_TAG:-1.5.8}
+        container_name: inventree-worker
+        command: invoke worker
+        depends_on:
+            inventree-server:
+                condition: service_healthy
+        env_file:
+            - docker/inventree.env
+        volumes:
+            - ./docker/data:/home/inventree/data:z
+        healthcheck:
+            test: ['CMD-SHELL', 'invoke worker-health']
+            interval: 60s
+            timeout: 10s
+            retries: 3
+            start_period: 180s
+        restart: unless-stopped
+
+    inventree-proxy:
+        image: caddy:alpine
+        container_name: inventree-proxy
+        depends_on:
+            inventree-server:
+                condition: service_healthy
+            inventree-worker:
+                condition: service_healthy
+        ports:
+            - ${INVENTREE_HTTP_PORT:-80}:80
+            - ${INVENTREE_HTTPS_PORT:-443}:443
+        env_file:
+            - docker/inventree.env
+        environment:
+            INVENTREE_SERVER: http://inventree-server:8000
+        healthcheck:
+            test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9090/api/system/health/']
+            interval: 20s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        volumes:
+            - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro,z
+            - ./docker/data/static:/var/www/static:z
+            - ./docker/data/media:/var/www/media:z
+            - ./docker/data:/var/log:z
+            - ./docker/data:/data:z
+            - ./docker/data:/config:z
+        restart: always
