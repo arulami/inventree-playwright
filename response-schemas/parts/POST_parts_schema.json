@@ -1,0 +1,426 @@
+{
+    "type": "object",
+    "properties": {
+        "active": {
+            "type": "boolean"
+        },
+        "assembly": {
+            "type": "boolean"
+        },
+        "barcode_hash": {
+            "type": "string"
+        },
+        "category": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "category_detail": {
+            "type": [
+                "null",
+                "object"
+            ],
+            "properties": {
+                "pk": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "default_location": {
+                    "type": "null"
+                },
+                "default_keywords": {
+                    "type": "null"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "parent": {
+                    "type": "null"
+                },
+                "part_count": {
+                    "type": "null"
+                },
+                "subcategories": {
+                    "type": "null"
+                },
+                "pathstring": {
+                    "type": "string"
+                },
+                "starred": {
+                    "type": "boolean"
+                },
+                "structural": {
+                    "type": "boolean"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "parent_default_location": {
+                    "type": "null"
+                }
+            },
+            "required": [
+                "pk",
+                "name",
+                "description",
+                "default_location",
+                "default_keywords",
+                "level",
+                "parent",
+                "part_count",
+                "subcategories",
+                "pathstring",
+                "starred",
+                "structural",
+                "icon",
+                "parent_default_location"
+            ]
+        },
+        "category_path": {
+            "type": [
+                "null",
+                "array"
+            ],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pk": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "pk",
+                    "name"
+                ]
+            }
+        },
+        "category_name": {
+            "type": "string"
+        },
+        "component": {
+            "type": "boolean"
+        },
+        "creation_date": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "creation_user": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "default_expiry": {
+            "type": "integer"
+        },
+        "default_location": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "default_location_detail": {
+            "type": [
+                "null",
+                "object"
+            ]
+        },
+        "description": {
+            "type": "string"
+        },
+        "full_name": {
+            "type": "string"
+        },
+        "image": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "IPN": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "is_template": {
+            "type": "boolean"
+        },
+        "keywords": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "link": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "locked": {
+            "type": "boolean"
+        },
+        "minimum_stock": {
+            "type": "number"
+        },
+        "maximum_stock": {
+            "type": "number"
+        },
+        "name": {
+            "type": "string"
+        },
+        "parameters": {
+            "type": [
+                "null",
+                "array"
+            ]
+        },
+        "pk": {
+            "type": "integer"
+        },
+        "purchaseable": {
+            "type": "boolean"
+        },
+        "revision": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "revision_of": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "revision_count": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "salable": {
+            "type": "boolean"
+        },
+        "starred": {
+            "type": "boolean"
+        },
+        "thumbnail": {
+            "type": "string"
+        },
+        "testable": {
+            "type": "boolean"
+        },
+        "trackable": {
+            "type": "boolean"
+        },
+        "units": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "variant_of": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "virtual": {
+            "type": "boolean"
+        },
+        "consumable": {
+            "type": "boolean"
+        },
+        "pricing_min": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "pricing_max": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "pricing_updated": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "responsible": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "price_breaks": {
+            "type": [
+                "null",
+                "array"
+            ]
+        },
+        "allocated_to_build_orders": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "allocated_to_sales_orders": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "building": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "scheduled_to_build": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "category_default_location": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "in_stock": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "ordering": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "required_for_build_orders": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "required_for_sales_orders": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "stock_item_count": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "total_in_stock": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "external_stock": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "unallocated_stock": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "variant_stock": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "tags": {
+            "type": "array"
+        }
+    },
+    "required": [
+        "active",
+        "assembly",
+        "barcode_hash",
+        "category",
+        "category_detail",
+        "category_path",
+        "category_name",
+        "component",
+        "creation_date",
+        "creation_user",
+        "default_expiry",
+        "default_location",
+        "default_location_detail",
+        "description",
+        "full_name",
+        "image",
+        "IPN",
+        "is_template",
+        "keywords",
+        "link",
+        "locked",
+        "minimum_stock",
+        "maximum_stock",
+        "name",
+        "parameters",
+        "pk",
+        "purchaseable",
+        "revision",
+        "revision_of",
+        "revision_count",
+        "salable",
+        "starred",
+        "thumbnail",
+        "testable",
+        "trackable",
+        "units",
+        "variant_of",
+        "virtual",
+        "consumable",
+        "pricing_min",
+        "pricing_max",
+        "pricing_updated",
+        "responsible",
+        "price_breaks",
+        "allocated_to_build_orders",
+        "allocated_to_sales_orders",
+        "building",
+        "scheduled_to_build",
+        "category_default_location",
+        "in_stock",
+        "ordering",
+        "required_for_build_orders",
+        "required_for_sales_orders",
+        "stock_item_count",
+        "total_in_stock",
+        "external_stock",
+        "unallocated_stock",
+        "variant_stock",
+        "tags"
+    ]
+}

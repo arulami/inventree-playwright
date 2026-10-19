@@ -1,0 +1,113 @@
+{
+    "type": "object",
+    "properties": {
+        "count": {
+            "type": "integer"
+        },
+        "next": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "previous": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "results": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pk": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "default_location": {
+                        "type": [
+                            "null",
+                            "integer"
+                        ]
+                    },
+                    "default_keywords": {
+                        "type": [
+                            "null",
+                            "string"
+                        ]
+                    },
+                    "level": {
+                        "type": "integer"
+                    },
+                    "parent": {
+                        "type": [
+                            "null",
+                            "integer"
+                        ]
+                    },
+                    "part_count": {
+                        "type": [
+                            "null",
+                            "integer"
+                        ]
+                    },
+                    "subcategories": {
+                        "type": [
+                            "null",
+                            "integer"
+                        ]
+                    },
+                    "pathstring": {
+                        "type": "string"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    },
+                    "structural": {
+                        "type": "boolean"
+                    },
+                    "icon": {
+                        "type": [
+                            "null",
+                            "string"
+                        ]
+                    },
+                    "parent_default_location": {
+                        "type": [
+                            "null",
+                            "integer"
+                        ]
+                    }
+                },
+                "required": [
+                    "pk",
+                    "name",
+                    "description",
+                    "default_location",
+                    "default_keywords",
+                    "level",
+                    "parent",
+                    "part_count",
+                    "subcategories",
+                    "pathstring",
+                    "starred",
+                    "structural",
+                    "icon",
+                    "parent_default_location"
+                ]
+            }
+        }
+    },
+    "required": [
+        "count",
+        "next",
+        "previous",
+        "results"
+    ]
+}
