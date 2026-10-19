@@ -7,3 +7,10 @@ export function getNewPartValues(categoryName: string) {
     categoryName,
   }
 }
+
+export function getNewCategoryValues() {
+  return {
+    name: `PW Category ${faker.string.alphanumeric(8)}`,
+    description: faker.lorem.sentence(4),
+  }
+}

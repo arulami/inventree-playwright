@@ -8,6 +8,12 @@ import { defineConfig, devices } from '@playwright/test';
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+// The public demo server loads the UI through several sequential API calls (session, roles, settings, data);
+// under parallel load these take longer than the default 5s, so UI assertions get 10s and UI tests 90s
+// (a multi-page flow makes 10+ such round trips).
+const uiExpectTimeout = 10_000
+const uiTestTimeout = 90_000
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -42,15 +48,30 @@ export default defineConfig({
       name: 'ui-auth-setup',
       testDir: './tests/ui-tests',
       testMatch: /auth\.setup\.ts/,
+      expect: { timeout: uiExpectTimeout },
       use: { ...devices['Desktop Chrome'] },
     },
 
     {
       name: 'ui-engineer',
       testDir: './tests/ui-tests/engineer',
+      expect: { timeout: uiExpectTimeout },
+      timeout: uiTestTimeout,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright-utils/ui/.auth/engineer.json',
+      },
+      dependencies: ['ui-auth-setup'],
+    },
+
+    {
+      name: 'ui-reader',
+      testDir: './tests/ui-tests/reader',
+      expect: { timeout: uiExpectTimeout },
+      timeout: uiTestTimeout,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright-utils/ui/.auth/reader.json',
       },
       dependencies: ['ui-auth-setup'],
     },

@@ -10,7 +10,8 @@ There are no npm scripts; run Playwright directly. Tests are split into projects
 
 ```bash
 npx playwright test --project=api-testing                    # all API tests
-npx playwright test --project=ui-engineer                    # UI tests (runs ui-auth-setup first)
+npx playwright test --project=ui-engineer                    # UI tests as engineer (runs ui-auth-setup first)
+npx playwright test --project=ui-reader                      # UI tests as the read-only user
 npx playwright test tests/api-tests/parts-crud.spec.ts --project=api-testing
 npx playwright test -g "Engineer can update a part description"   # single test by title
 npx playwright test --project=api-testing --trace on         # force a trace (default: retain-on-failure)
@@ -34,7 +35,9 @@ node manual-tests/tools/validate-cases.mjs inventree         # check manual test
 
 **UI suite** (`tests/ui-tests/`, `playwright-utils/ui/`):
 - Page Object Model: `PageManager` builds every page object and is exposed as the single `pom` fixture (`playwright-utils/ui/fixtures/index.ts`). New page objects must be registered there.
-- `auth.setup.ts` logs in through the UI and saves `playwright-utils/ui/.auth/engineer.json`. The `ui-engineer` project reuses that storage state. A new role needs its own setup step plus a project.
+- `auth.setup.ts` logs in through the UI and saves one storage state per role (`playwright-utils/ui/.auth/engineer.json`, `reader.json`), used by the `ui-engineer` / `ui-reader` projects (spec folders `tests/ui-tests/engineer/`, `reader/`). A new role needs its own setup step plus a project.
+- The demo accounts are shared and anyone can change their profile language, so the setup pins the browser-side UI language to English; locators rely on English labels.
+- UI projects use a 10s assertion and 90s test timeout (set in `playwright.config.ts`) because the demo server loads pages through several slow sequential API calls. UI-created parts and categories are cleaned up through the API by the `partCleanup` / `categoryCleanup` fixtures.
 
 **Shared across both suites:**
 - `helpers/createToken.ts` gets an API token through `GET /user/token/?name=<unique>` with Basic auth. InvenTree issues a token only once per name, so the name must stay unique. Tokens are worker-scoped fixtures.
