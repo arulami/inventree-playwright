@@ -1,6 +1,6 @@
 ---
 description: Playwright API framework architecture - layout, RequestHandler, fixtures, auth token, logger, custom expect, schema validator, data generators, environments, and how to extend them
-paths: [tests/api-tests/**, playwright-utils/api/**, request-objects/**, response-schemas/**, helpers/**, api-test.cofig.ts, playwright.config.ts]
+paths: [tests/api-tests/**, playwright-utils/api/**, request-objects/**, response-schemas/**, helpers/**, api-test.config.ts, playwright.config.ts]
 ---
 
 # Playwright API Architecture
@@ -19,7 +19,7 @@ paths: [tests/api-tests/**, playwright-utils/api/**, request-objects/**, respons
 | `request-objects/<VERB>-<resource>.json` | Base request bodies |
 | `response-schemas/<resource>/<VERB>_<resource>_schema.json` | JSON schemas per endpoint |
 | `helpers/` | Standalone utilities used outside the fixture lifecycle (e.g. `createToken.ts`) |
-| `api-test.cofig.ts` | Environment config (`apiUrl`, credentials from `.env`) |
+| `api-test.config.ts` | Environment config (`apiUrl`, credentials from `.env`) |
 
 UI code lives under `tests/ui-tests/` and `playwright-utils/ui/` and follows the UI rules — never import UI page objects into API specs or API helpers into UI pages.
 

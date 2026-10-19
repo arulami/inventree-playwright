@@ -2,7 +2,7 @@ import { test as base } from '@playwright/test'
 import { RequestHandler } from './request-handler'
 import { APILogger } from './logger'
 import { setCustomExpectLogger } from './custom-expect'
-import { config } from '../../api-test.cofig';
+import { config } from '../../api-test.config';
 import { createToken } from '../../helpers/createToken';
 import { deletePart } from '../../helpers/deletePart';
 

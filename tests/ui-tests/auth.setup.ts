@@ -1,5 +1,5 @@
 import { test as setup, expect } from '@playwright/test'
-import { config } from '../../api-test.cofig'
+import { config } from '../../api-test.config'
 
 const engineerFile = 'playwright-utils/ui/.auth/engineer.json'
 

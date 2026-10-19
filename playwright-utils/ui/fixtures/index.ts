@@ -1,6 +1,6 @@
 import { test as base, expect } from '@playwright/test'
 import { PageManager } from './page-manager'
-import { config } from '../../../api-test.cofig'
+import { config } from '../../../api-test.config'
 import { createToken } from '../../../helpers/createToken'
 import { deletePart } from '../../../helpers/deletePart'
 

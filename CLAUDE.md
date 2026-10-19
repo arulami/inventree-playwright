@@ -1,0 +1,51 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Playwright (TypeScript) test framework for the InvenTree inventory system, targeting the public demo server `https://demo.inventree.org` (shared, reset every 24 h). It holds API tests, UI tests, and manual test case docs.
+
+## Commands
+
+There are no npm scripts; run Playwright directly. Tests are split into projects in `playwright.config.ts`:
+
+```bash
+npx playwright test --project=api-testing                    # all API tests
+npx playwright test --project=ui-engineer                    # UI tests (runs ui-auth-setup first)
+npx playwright test tests/api-tests/parts-crud.spec.ts --project=api-testing
+npx playwright test -g "Engineer can update a part description"   # single test by title
+npx playwright test --project=api-testing --trace on         # force a trace (default: retain-on-failure)
+npx playwright show-report                                   # HTML report
+npx tsc --noEmit                                             # type-check (no lint config exists)
+```
+
+`TEST_ENV` selects the environment (`dev` default → demo server; `qa`/`prod` also need `INVENTREE_API_URL`).
+
+`.env` (git-ignored) must define `INVENTREE_USERNAME`, `INVENTREE_PASSWORD` (demo `engineer` user, can manage parts) and `INVENTREE_READER_USERNAME`, `INVENTREE_READER_PASSWORD` (demo `reader`, read-only). `api-test.config.ts` throws at import time if any are missing, and **both** API and UI suites import it.
+
+## Architecture
+
+**API suite** (`tests/api-tests/`, `playwright-utils/api/`):
+- Specs import `test` from `playwright-utils/api/fixtures.ts` and `expect` from `playwright-utils/api/custom-expect.ts`, never `expect` from `@playwright/test`.
+- `RequestHandler` is a fluent builder (`.path().params().headers().body()` → `.getRequest(expectedStatus)`). It wraps each call in `test.step`, logs to `APILogger`, attaches the auth token, checks the status code, and resets its state after every request.
+- Custom matchers (`shouldEqual`, `shouldBeLessThanOrEqual`, `shouldMatchSchema`) add the recent API activity to failure messages. The `api` fixture wires the per-test logger into them through `setCustomExpectLogger`.
+- `shouldMatchSchema(dir, name)` validates against `response-schemas/<dir>/<name>_schema.json` with AJV. Passing `true` as the third argument regenerates that schema from the live response (genson-js).
+- Payloads: base JSON in `request-objects/`, randomized by factories in `data-generator.ts` (structuredClone + faker).
+
+**UI suite** (`tests/ui-tests/`, `playwright-utils/ui/`):
+- Page Object Model: `PageManager` builds every page object and is exposed as the single `pom` fixture (`playwright-utils/ui/fixtures/index.ts`). New page objects must be registered there.
+- `auth.setup.ts` logs in through the UI and saves `playwright-utils/ui/.auth/engineer.json`. The `ui-engineer` project reuses that storage state. A new role needs its own setup step plus a project.
+
+**Shared across both suites:**
+- `helpers/createToken.ts` gets an API token through `GET /user/token/?name=<unique>` with Basic auth. InvenTree issues a token only once per name, so the name must stay unique. Tokens are worker-scoped fixtures.
+- `partCleanup.register(pk)`: both suites have this fixture. At teardown, `helpers/deletePart.ts` deactivates and then deletes each registered part (InvenTree refuses to delete active parts). UI tests create parts through the browser and clean them up through the API. Register every part a test creates.
+
+## Conventions
+
+Detailed, path-scoped rules in `.claude/rules/` load automatically when matching files are touched. Follow them:
+- `playwright-api-architecture.md` / `playwright-api-scripting.md`: API framework and spec style
+- `playwright-architecture.md` / `playwright-scripting.md`: POM rules (locators inline in methods, no tiny methods, strict page boundaries, `expect*` validation methods, role-based locators first)
+- `manual-test-cases.md`: `manual-tests/` (see `manual-tests/README.md`). Case IDs are append-only, and `traceability.md` counts must be updated when cases change.
+
+Project skills in `.claude/skills/` (`pw-new-test`, `pw-api-new-test`, `pw-debug-test`, `pw-test-audit`, etc.) cover writing, debugging, and auditing tests.
+
+The demo server is shared: use the least-privileged account that covers the test, never write tests as `admin`, and don't depend on fixed record IDs. Look them up at runtime (e.g. the first category from `/part/category/`).

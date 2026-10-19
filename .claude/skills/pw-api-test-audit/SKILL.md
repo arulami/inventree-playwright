@@ -13,7 +13,7 @@ Audit the most recent Playwright API test changes against the project's API rule
 
 ```bash
 git status --short
-git diff HEAD -- tests/api-tests playwright-utils/api request-objects response-schemas helpers api-test.cofig.ts
+git diff HEAD -- tests/api-tests playwright-utils/api request-objects response-schemas helpers api-test.config.ts
 git status --short --untracked-files=all -- tests/api-tests playwright-utils/api request-objects response-schemas helpers
 ```
 
