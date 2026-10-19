@@ -84,4 +84,29 @@ test.describe('Parts CRUD', () => {
             .getRequest(200)
         expect(partResponse.active).shouldEqual(true)
     })
+
+    test('Engineer cannot delete a locked part', async ({ api, partCleanup }) => {
+        const createPartResponse = await api
+            .path('/part/')
+            .body(getNewRandomPart(categoryPk))
+            .postRequest(201)
+        partCleanup.register(createPartResponse.pk)
+
+        const lockPartResponse = await api
+            .path(`/part/${createPartResponse.pk}/`)
+            .body({ locked: true, active: false })
+            .patchRequest(200)
+        expect(lockPartResponse.locked).shouldEqual(true)
+        expect(lockPartResponse.active).shouldEqual(false)
+
+        const deletePartResponse = await api
+            .path(`/part/${createPartResponse.pk}/`)
+            .deleteRequest(400)
+        expect(deletePartResponse.non_field_errors[0]).shouldEqual('Cannot delete this part as it is locked')
+
+        const partResponse = await api
+            .path(`/part/${createPartResponse.pk}/`)
+            .getRequest(200)
+        expect(partResponse.locked).shouldEqual(true)
+    })
 })

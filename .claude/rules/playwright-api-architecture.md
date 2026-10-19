@@ -39,7 +39,7 @@ export const test = base.extend<TestOptions, WorkerFixture>({
 - **`authToken`** / **`readerToken`** — worker-scoped; `helpers/createToken.ts` calls `GET /user/token/?name=<unique>` with Basic auth and returns `'Token <token>'`. InvenTree issues a token only once per name, so the name includes the user, a timestamp and a random suffix.
 - **`api`** — a new `RequestHandler` and `APILogger` per test; the logger is registered with `setCustomExpectLogger` so matcher failures include this test's activity.
 - **`config`** — the resolved environment config.
-- **`partCleanup`** — `register(pk)` after creating a part; teardown deactivates (`PATCH active=false`) and deletes it, skipping 404s. Add an equivalent fixture for other resources that need teardown.
+- **`partCleanup`** — `register(pk)` after creating a part; teardown deactivates and unlocks it (`PATCH active=false, locked=false`) and deletes it, skipping 404s. Add an equivalent fixture for other resources that need teardown.
 - Add new fixtures here with `base.extend`. Resources needing teardown (created users, seeded data) belong in a fixture so cleanup runs even when the test fails.
 - If a different user is needed, add a separate worker fixture like `readerToken` rather than logging in inside a test.
 

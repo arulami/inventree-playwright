@@ -55,7 +55,7 @@ await api
 - **Always pass `limit`** on list endpoints — with `limit` the response is paged (`{ count, next, previous, results }`); without it InvenTree returns a plain array.
 - Use **`PATCH`** for partial updates; `PUT` replaces the whole object.
 - Validation errors are **400** with errors keyed by field: `{ "name": ["This field is required."] }`; object-level errors use `non_field_errors`. Missing/invalid auth is **401**, missing permission **403**, unknown object **404** (`{ "detail": "No Part matches the given query." }`).
-- **Parts can only be deleted when inactive** — `PATCH { active: false }` first; deleting an active part returns 400.
+- **Parts can only be deleted when inactive and unlocked** — `PATCH { active: false }` first; deleting an active part returns 400 (`Cannot delete this part as it is still active`), a locked part 400 (`Cannot delete this part as it is locked`).
 - Identify objects by **`pk`** captured from responses — demo data is reset regularly, so never hardcode a pk of existing data. Look up what you need (e.g. a category via `GET /part/category/?limit=1`) in `beforeEach`.
 
 ## Assertions
