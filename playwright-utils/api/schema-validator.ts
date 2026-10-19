@@ -33,7 +33,7 @@ async function loadSchema(schemaPath: string) {
         const schemaContent = await fs.readFile(schemaPath, 'utf-8')
         return JSON.parse(schemaContent)
 
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Failed to read the schema file: ${error.message}`)
     }
 }
@@ -43,7 +43,7 @@ async function generateNewSchema(responseBody: object, schemaPath: string) {
         const generatedSchema = createSchema(responseBody)
         await fs.mkdir(path.dirname(schemaPath), { recursive: true })
         await fs.writeFile(schemaPath, JSON.stringify(generatedSchema, null, 4))
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Failed to create schema file: ${error.message}`)
     }
 

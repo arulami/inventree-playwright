@@ -13,7 +13,7 @@ export class RequestHandler {
     private apiHeaders: Record<string, string> = {}
     private apiBody: object = {}
     private defaultAuthToken: string
-    private clearAuthFlag: boolean
+    private clearAuthFlag: boolean = false
 
     constructor(request: APIRequestContext, apiBaseUrl: string, logger: APILogger, authToken: string = '') {
         this.request = request
