@@ -42,4 +42,10 @@ Mechanical
 | `Hookup Wire` | units `m`, Purchaseable | Electronics |
 | `M3 Screw` | Component, Purchaseable | Fasteners |
 
+**Stock locations:** `Warehouse` (top level), with child `Shelf A`.
+
+**Companies:** `Mouser` (supplier), `Yageo` (manufacturer).
+
+**Parameters:** category `Resistors` has category parameter templates `Resistance` and `Tolerance`; seed part `R-10K-0603` has parameter `Resistance` = `10k`.
+
 **Notification start state:** `M3 Screw` minimum stock 100 and total stock 150 before each notification case. `engineer` email `engineer@example.com`; `viewer` has no email address.

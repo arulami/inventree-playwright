@@ -2,7 +2,7 @@
 
 Source: OpenAPI schema `https://demo.inventree.org/api/schema/?format=json` — OpenAPI 3.0.3, InvenTree API version **560** — digested 2026-10-19 with `.claude/skills/mt-api-test-cases/scripts/openapi-digest.mjs`.
 Conventions from https://docs.inventree.org/en/stable/api/, https://docs.inventree.org/en/stable/api/schema/ and https://docs.inventree.org/en/stable/settings/permissions/, fetched 2026-10-19.
-Paths ingested: `/api/part/`, `/api/part/{id}/`. Rendered reference: https://docs.inventree.org/en/stable/api/schema/part/.
+Paths ingested: `/api/part/`, `/api/part/{id}/` (create-option schemas added 2026-10-19). Rendered reference: https://docs.inventree.org/en/stable/api/schema/part/.
 IDs (e.g. `API-PRT-01`) are assigned here for traceability; the schema does not number them. Business rules from the product docs stay in [parts.md](parts.md) and are cited alongside these IDs.
 
 ⚠ = not stated by the docs or schema. Where noted, the behaviour was observed on the demo server (API 560) by the automated specs in `tests/api-tests/`.
@@ -59,3 +59,13 @@ IDs (e.g. `API-PRT-01`) are assigned here for traceability; the schema does not 
 | API-PRT-26 | `DELETE /api/part/{id}/` (`part_destroy`) deletes the part — **204**. Scope `r:delete:part`. ⚠ An active part cannot be deleted (observed: 400 `non_field_errors` "Cannot delete this part as it is still active"; the docs only recommend deactivating, ACT-02). |
 | API-PRT-27 | `locked` — "Locked parts cannot be edited" (schema field description). See LOCK-01..05 for the documented locking rules. |
 | API-PRT-28 | ⚠ `tags` (array of strings) is listed only on the PATCH request schema (`PatchedPart`), not on create/PUT. |
+
+## 4. Create options on POST /api/part/
+
+Write-only objects from API-PRT-16, digested from the `InitialSupplier`, `InitialStock` and `PartDuplicateOptions` schemas (API 560).
+
+| ID | Requirement |
+|---|---|
+| API-PRT-29 | `initial_supplier` — `supplier` (company `pk`, nullable, "leave blank to skip"), `sku` (string, maxLength **100**), `manufacturer` (company `pk`, nullable), `mpn` (string, maxLength **100**). Creates the supplier part and manufacturer part for the new part (CRT-06). |
+| API-PRT-30 | `initial_stock` — `quantity` (**required**; "If quantity is zero, no stock is added"), `location` (location `pk`, nullable). Applies when the "Initial Stock Data" setting is enabled (CRT-05, default False). |
+| API-PRT-31 | `duplicate` — `original` (part `pk`, **required**) plus booleans `copy_image`, `copy_bom`, `copy_notes`, `copy_tests`, `copy_parameters`. Creates the new part as a copy of `original` (DUP-01..05). |

@@ -17,5 +17,5 @@ Requirement IDs: [requirements/parts.md](requirements/parts.md) (UI, product doc
 | Part revisions | 23 | 0 | [ui/parts/09-revisions.md](ui/parts/09-revisions.md) |
 | Negative & boundary scenarios | 30 | 0 | [ui/parts/10-negative-boundary.md](ui/parts/10-negative-boundary.md) |
 | Notifications | 20 | 0 | [ui/parts/11-notifications.md](ui/parts/11-notifications.md) |
-| Parts CRUD (`/api/part/`, `/api/part/{id}/`) | 0 | 79 | [api/parts/01-parts-crud.md](api/parts/01-parts-crud.md) |
-| **Total** | **256** | **79** | |
+| Parts CRUD (`/api/part/`, `/api/part/{id}/`) | 0 | 153 | [api/parts/01-parts-crud.md](api/parts/01-parts-crud.md) |
+| **Total** | **256** | **153** | |

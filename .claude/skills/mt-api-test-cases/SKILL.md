@@ -62,7 +62,7 @@ Pick the target file: an existing `api/<module>/NN-<area>.md`, or a new one copi
 
 ### 6. Draft the cases
 
-Apply `manual-test-design.md`, in this order per operation: positive → validation boundaries → permissions (engineer / reader / no auth) → not found → read-only fields → lifecycle → list parameters. For each case have ready every API column: ID, title, pre-conditions, Method, Endpoint (with `<placeholders>`), Auth (`Token (engineer)`, `Token (reader)`, `None`), Request (exact JSON or query string), Expected status, Expected response (named fields), Pri, Type, Req.
+Apply `manual-test-design.md`, in this order per operation: positive → required / nullable / non-nullable fields → length and numeric boundaries → wrong types and malformed bodies → reference fields → uniqueness and settings-dependent conflicts → permissions (engineer / reader / no auth) → not found → read-only fields → lifecycle and related resources → list pagination, ordering, search and filter groups. Work through the techniques table for every writable field in the digest, not only the ones with obvious constraints. For each case have ready every API column: ID, title, pre-conditions, Method, Endpoint (with `<placeholders>`), Auth (`Token (engineer)`, `Token (reader)`, `None`), Request (exact JSON or query string), Expected status, Expected response (named fields), Pri, Type, Req.
 
 ### 7. Confirm with the user
 
